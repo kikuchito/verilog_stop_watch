@@ -1,0 +1,126 @@
+module stopwatch(
+input start_stop,
+input reset,
+input clk_50,
+input [1:0] KEY,
+output [6:0] HEX0,
+output [6:0] HEX1,
+output [6:0] HEX2,
+output [6:0] HEX3
+);
+reg[14:0] pulse_counter_povishenie;
+reg[17:0] pulse_counter_hundredth;
+reg[3:0] pulse_counter_hundredth1;
+wire hundredth_of_second_povishenie = (pulse_counter_hundredth >= 15'd49999);
+wire hundredth_of_second_passed = (pulse_counter_hundredth >= 18'd499999);
+wire hundredth_of_second_ternar = KEY[0] ? hundredth_of_second_povishenie:hundredth_of_second_passed;
+wire hundredth_of_second_passed1=(pulse_counter_hundredth1 == 4'd9);
+always @(posedge clk_50 or negedge KEY[1]) 
+begin
+ if (~KEY[1]) pulse_counter_hundredth <= 0; //асинхронный сброс
+ else begin
+ /*if (KEY[0]) 
+ begin
+ if(hundredth_of_second_povishenie) pulse_counter_povishenie<=0;
+ else pulse_counter_povishenie<=pulse_counter_povishenie+1;
+ end*/
+ if(hundredth_of_second_ternar) pulse_counter_hundredth<=0;
+ else pulse_counter_hundredth<=pulse_counter_hundredth+1;
+ end
+ end
+always @(posedge clk_50 or negedge KEY[1]) begin
+if (~KEY[1]) pulse_counter_hundredth1 <= 0;
+else begin
+ if(hundredth_of_second_ternar)
+ begin
+ if(hundredth_of_second_passed1) pulse_counter_hundredth1<=0;
+ else pulse_counter_hundredth1<=pulse_counter_hundredth1+1;
+ end
+ else pulse_counter_hundredth1<=pulse_counter_hundredth1;
+ end
+end
+
+
+
+//reg[16:0] pulse_counter_tens;
+reg[3:0] pulse_counter_tens1;
+//wire ten_of_seconds=(pulse_counter_tens==18'd4999999);
+wire ten_of_seconds1=(pulse_counter_tens1 == 4'd9);
+/*always @(posedge clk_50 or negedge KEY[1]) 
+begin
+ if (~KEY[1]) pulse_counter_tens <= 0; //асинхронный сброс
+ else begin
+ if(ten_of_seconds) pulse_counter_tens<=0;
+ else pulse_counter_tens<=pulse_counter_tens+1;
+ end
+end*/
+always @(posedge clk_50 or negedge KEY[1]) begin
+if (~KEY[1]) pulse_counter_tens1 <= 0;
+else begin
+ if(hundredth_of_second_passed1 & hundredth_of_second_ternar)
+ begin
+ if(ten_of_seconds1) pulse_counter_tens1<=0;
+ else pulse_counter_tens1<=pulse_counter_tens1+1;
+ end
+ else pulse_counter_tens1<=pulse_counter_tens1;
+ end
+end
+
+
+
+//reg[16:0] pulse_counter_ones;
+reg[3:0] pulse_counter_ones1;
+//wire one_of_seconds=(pulse_counter_ones==18'd49999999);
+wire one_of_seconds1=(pulse_counter_ones1 == 4'd9);
+/*always @(posedge clk_50 or negedge KEY[1]) 
+begin
+ if (~KEY[1]) pulse_counter_ones <= 0; //асинхронный сброс
+ else begin
+ if(one_of_seconds) pulse_counter_ones<=0;
+ else pulse_counter_ones<=pulse_counter_ones+1;
+ end
+end*/
+always @(posedge clk_50 or negedge KEY[1]) begin
+if (~KEY[1]) pulse_counter_ones1 <= 0;
+else begin
+ if(ten_of_seconds1 & hundredth_of_second_ternar & hundredth_of_second_passed1)
+ begin
+ if(one_of_seconds1) pulse_counter_ones1<=0;
+ else pulse_counter_ones1<=pulse_counter_ones1+1;
+ end
+ else pulse_counter_ones1<=pulse_counter_ones1;
+ end
+end
+
+
+reg[3:0] pulse_counter_main1;
+//wire one_of_main=(pulse_counter_ones1 == 4'd9);
+wire one_of_main1=(pulse_counter_main1 == 4'd9);
+always @(posedge clk_50 or negedge KEY[1]) begin
+if (~KEY[1]) pulse_counter_main1 <= 0;
+else begin
+ if(one_of_seconds1 & hundredth_of_second_ternar & ten_of_seconds1 & hundredth_of_second_passed1)
+ begin
+ if(one_of_main1) pulse_counter_main1<=0;
+ else pulse_counter_main1<=pulse_counter_main1+1;
+ end
+ else pulse_counter_main1<=pulse_counter_main1;
+ end
+end
+decode hex0 (
+.NUM(pulse_counter_hundredth1),
+.SEG(HEX0)
+);
+decode hex1 (
+.NUM(pulse_counter_tens1),
+.SEG(HEX1)
+);
+decode hex2 (
+.NUM(pulse_counter_ones1),
+.SEG(HEX2)
+);
+decode hex3 (
+.NUM(pulse_counter_main1),
+.SEG(HEX3)
+);
+endmodule
